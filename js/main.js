@@ -41,22 +41,31 @@ function setupGrid() {
 			)
 		});
 	}
+
+	if(row.length)
+		grid.push(row);
+
 	// we expect 0,0 to be at the bottom left, since the 1st estimate will go there
 	grid.reverse();
 }
 
 function debugDrawGrid() {
-	grid.forEach(function(row) {
-		row.forEach(function(cell) {
+	grid.forEach(function(row, rowIdx) {
+		row.forEach(function(cell, cellIdx) {
 
 			estimateBoard.lineStyle(1, 0x000000, 1);
 			estimateBoard.beginFill(0xffffff);
 			estimateBoard.drawRect(cell.location.x, cell.location.y, cell.location.width, cell.location.height);
 
-			estimateBoard.beginFill(0xcccccc);
-			estimateBoard.lineStyle(0);
+			estimateBoard.lineStyle(1, 0xc0c0c0, 1);
+			estimateBoard.beginFill(0xf2f2f2);
 			estimateBoard.drawRect(cell.contentLocation.x, cell.contentLocation.y, cell.contentLocation.width, cell.contentLocation.height);
 
+			var text = new PIXI.Text(rowIdx + ',' + cellIdx, {font: "16px Arial", fill: "black", align: "center", wordWrap: true, wordWrapWidth: cell.contentLocation.width});
+			text.position.x = cell.contentLocation.x + 15;
+			text.position.y = cell.contentLocation.y + 15;
+			text.position.anchor = new PIXI.Point(0.5, 0.5);
+			stage.addChild(text);
 		})
 	});
 }
