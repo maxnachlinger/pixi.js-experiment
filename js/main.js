@@ -2,23 +2,99 @@
 var stage = new PIXI.Stage(0xFFFFFF, true);
 stage.setInteractive(true);
 
-var renderer = new PIXI.autoDetectRenderer(800, 600);
+var estimatesPerRow = 6;
+var amtRows = 6;
+var cellWidth = 110;
+var cellHeight = 110;
+var cellPadding = 5;
+var grid = [];
+
+function setupGrid() {
+	var row = [];
+	var lastRowIdx = -1;
+	var rowIdx = 0;
+	var rect = new PIXI.Rectangle();
+
+	for (var i = 0, c = estimatesPerRow * amtRows; i < c; i++) {
+		rowIdx = Math.floor(i / estimatesPerRow);
+		if (rowIdx != lastRowIdx) {
+			if (row.length)
+				grid.push(row);
+
+			lastRowIdx = rowIdx;
+			row = [];
+		}
+		rect = new PIXI.Rectangle(
+				row.length * cellWidth,
+				rowIdx * cellHeight,
+				cellWidth,
+				cellHeight
+		);
+		row.push({
+			data: null,
+			location: rect,
+			contentLocation: new PIXI.Rectangle(
+					rect.x + cellPadding,
+					rect.y + cellPadding,
+					rect.width - (2 * cellPadding),
+					rect.height - (2 * cellPadding)
+			)
+		});
+	}
+	// we expect 0,0 to be at the bottom left, since the 1st estimate will go there
+	grid.reverse();
+}
+
+function debugDrawGrid() {
+	grid.forEach(function(row) {
+		row.forEach(function(cell) {
+
+			estimateBoard.lineStyle(1, 0x000000, 1);
+			estimateBoard.beginFill(0xffffff);
+			estimateBoard.drawRect(cell.location.x, cell.location.y, cell.location.width, cell.location.height);
+
+			estimateBoard.beginFill(0xcccccc);
+			estimateBoard.lineStyle(0);
+			estimateBoard.drawRect(cell.contentLocation.x, cell.contentLocation.y, cell.contentLocation.width, cell.contentLocation.height);
+
+		})
+	});
+}
+
+setupGrid();
+console.log(grid);
+
+var renderer = new PIXI.autoDetectRenderer(
+		estimatesPerRow * cellWidth,
+		amtRows * cellHeight
+);
 document.body.appendChild(renderer.view);
 
 var estimateBoard = new PIXI.Graphics();
 stage.addChild(estimateBoard);
+debugDrawGrid();
 
+renderer.render(stage);
+
+/*
 var estimates = [];
-var estimatesToDraw = [];
-var startX = -100;
 
-// TODO - handle rows
+var estimatesToDraw = [];
+var startX = -estimateSize.width;
+var estimateIdx = -1;
+var row = 0;
+
 function addEstimate(estimate) {
 	estimates.push(estimate);
 
-	startX += 110;
+	row = Math.floor(++estimateIdx / estimatesPerRow);
+	if (estimateIdx && estimateIdx % estimatesPerRow === 0)
+		startX = -estimateSize.width;
+
+	startX += estimateSize.width + estimatePaddingLeft;
 	estimatesToDraw.push({
-		rect: new PIXI.Rectangle(startX, 0, 100, 100),
+		baseY: row * (estimateSize.height + estimatePaddingBottom),
+		rect: new PIXI.Rectangle(startX, 0, estimateSize.width, estimateSize.height),
 		text: new PIXI.Text(estimate.estimate + "\n" + estimate.name, {font: "32px Arial", fill: "white", align: "center"}),
 		added: false
 	});
@@ -41,12 +117,15 @@ function drawEstimates() {
 	});
 }
 
+// todo - halt animation when every estimate is placed
 function animate() {
 	requestAnimFrame(animate);
 
 	estimatesToDraw = estimatesToDraw.map(function (estimate) {
-		if((estimate.rect.y + 1) < 500)
+
+		if ((estimate.rect.y + estimate.baseY + 1) < (renderer.height - estimateSize.height))
 			estimate.rect.y++;
+
 		return estimate;
 	});
 
@@ -54,28 +133,28 @@ function animate() {
 	renderer.render(stage);
 }
 
-/* test */
 var testEstimates = [
 	{name: 'Crab', estimate: '8'},
 	{name: 'Monkey', estimate: '10'},
 	{name: 'Mr. Fun Fun', estimate: '12'},
 	{name: 'Chicklet', estimate: '8'},
 	{name: 'Rama Lama', estimate: '10'},
-	{name: 'Ding Dong', estimate: '12'}
+	{name: 'Ding Dong', estimate: '12'},
+	{name: 'Crab', estimate: '8'},
+	{name: 'Monkey', estimate: '10'},
+	{name: 'Mr. Fun Fun', estimate: '12'},
+	{name: 'Chicklet', estimate: '8'},
+	{name: 'Rama Lama', estimate: '10'},
+	{name: 'Ding Dong', estimate: '12'},
+	{name: 'Crab', estimate: '8'},
+	{name: 'Monkey', estimate: '10'},
+	{name: 'Mr. Fun Fun', estimate: '12'},
+	{name: 'Chicklet', estimate: '8'}
 ];
-var testEstimates2 = [
-	{name: 'Yamaghuci', estimate: '8'},
-	{name: 'Max', estimate: '10'},
-	{name: 'Woohoo', estimate: '12'}
-];
-var testInterval = setInterval(function() {
-	if(testEstimates.length === 0)
+var testInterval = setInterval(function () {
+	if (testEstimates.length === 0)
 		return clearInterval(testInterval);
 	addEstimate(testEstimates.pop());
 }, 750);
-var testInterval2 = setInterval(function() {
-	if(testEstimates2.length === 0)
-		return clearInterval(testInterval2);
-	addEstimate(testEstimates2.pop());
-}, 2500);
 animate();
+*/
