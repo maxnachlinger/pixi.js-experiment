@@ -12,6 +12,7 @@ var estimates = [];
 var estimatesToDraw = [];
 var startX = -100;
 
+// TODO - handle rows
 function addEstimate(estimate) {
 	estimates.push(estimate);
 
@@ -57,21 +58,24 @@ function animate() {
 var testEstimates = [
 	{name: 'Crab', estimate: '8'},
 	{name: 'Monkey', estimate: '10'},
-	{name: 'Mr. Fun Fun', estimate: '12'}
+	{name: 'Mr. Fun Fun', estimate: '12'},
+	{name: 'Chicklet', estimate: '8'},
+	{name: 'Rama Lama', estimate: '10'},
+	{name: 'Ding Dong', estimate: '12'}
 ];
 var testEstimates2 = [
-	{name: 'Crab', estimate: '8'},
-	{name: 'Monkey', estimate: '10'},
-	{name: 'Mr. Fun Fun', estimate: '12'}
+	{name: 'Yamaghuci', estimate: '8'},
+	{name: 'Max', estimate: '10'},
+	{name: 'Woohoo', estimate: '12'}
 ];
 var testInterval = setInterval(function() {
 	if(testEstimates.length === 0)
 		return clearInterval(testInterval);
 	addEstimate(testEstimates.pop());
-}, 1000);
+}, 750);
 var testInterval2 = setInterval(function() {
 	if(testEstimates2.length === 0)
 		return clearInterval(testInterval2);
 	addEstimate(testEstimates2.pop());
-}, 3000);
+}, 2500);
 animate();
