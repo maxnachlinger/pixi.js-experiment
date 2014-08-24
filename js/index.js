@@ -1,4 +1,5 @@
 "use strict";
+var PIXI = require('pixi');
 var stage = new PIXI.Stage(0xc0c0c0);
 stage.setInteractive(true);
 
@@ -23,7 +24,7 @@ var estimatesToAnimateIn = [];
 addTestEstimates();
 
 function addEstimate(estimate) {
-	var cell = estimateBoardGrid.getNextCell();
+	var cell = estimateBoardGrid.getNextEmptyCell();
 	if(!cell) throw new Error('No cell left for this estimate, the board is too small.');
 
 	cell.data = estimate;
@@ -73,7 +74,7 @@ function drawEstimates() {
 				e.easingComplete = true;
 				amtAdded++;
 			}
-			console.log(amtAdded, 'complete');
+			console.log(amtAdded, 'item(s) done easing in.');
 		}
 	}
 	renderer.render(stage);
@@ -92,13 +93,13 @@ function animate(params) {
 	running = true;
 
 	if(amtAdded >= estimatesToAnimateIn.length) {
-		console.log('added all');
+		console.log('added all, stopping');
 		running = false;
 		return;
 	}
 
 	drawEstimates();
-	requestAnimFrame(function() { animate({mode: 'auto'}); });
+	requestAnimationFrame(function() { animate({mode: 'auto'}); });
 }
 
 renderer.render(stage);
@@ -184,7 +185,7 @@ function EstimateBoardGrid(params) {
 		stage.addChild(graphics);
 	}
 
-	function getNextCell() {
+	function getNextEmptyCell() {
 		for (var i = 0, c = cells.length; i < c; i++) {
 			if (!cells[i].data) return cells[i];
 		}
@@ -195,7 +196,7 @@ function EstimateBoardGrid(params) {
 		rect: boardRect,
 		cells: cells,
 		debugDrawEstimateBoard: debugDrawEstimateBoard,
-		getNextCell: getNextCell
+		getNextEmptyCell: getNextEmptyCell
 	};
 }
 
