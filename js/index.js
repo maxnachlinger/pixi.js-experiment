@@ -35,6 +35,7 @@ function addEstimate(estimate) {
 		return easeInCubic(currentTime, 0, cell.rect.y + cell.rect.y, 60);
 	};
 	cell.currentTime = 0;
+	cell.easingComplete = false;
 
 	estimatesToAnimateIn.push(cell);
 	animate({mode: 'triggered'});
@@ -67,10 +68,13 @@ function drawEstimates() {
 
 		e.added = true;
 
-//		if(e.yEasingCurrent >= e.rect.y) {
-//			console.log('done: ', i);
-//			amtAdded++;
-//		}
+		if(e.yEasingCurrent >= e.rect.y) {
+			if(!e.easingComplete) {
+				e.easingComplete = true;
+				amtAdded++;
+			}
+			console.log(amtAdded, 'complete');
+		}
 	}
 	renderer.render(stage);
 }
@@ -87,11 +91,11 @@ function animate(params) {
 
 	running = true;
 
-//	if(amtAdded >= estimatesToAnimateIn.length) {
-//		console.log('added all');
-//		running = false;
-//		return;
-//	}
+	if(amtAdded >= estimatesToAnimateIn.length) {
+		console.log('added all');
+		running = false;
+		return;
+	}
 
 	drawEstimates();
 	requestAnimFrame(function() { animate({mode: 'auto'}); });
@@ -232,7 +236,7 @@ function addTestEstimates() {
 	testInterval2 = setInterval(function () {
 		if(testEstimates.length > 0) return; // do the second second, um, second!
 		if (testEstimates2.length === 0)
-			return clearInterval(testInterval);
+			return clearInterval(testInterval2);
 		addEstimate(testEstimates2.pop());
-	}, 1200);
+	}, 1000);
 }
