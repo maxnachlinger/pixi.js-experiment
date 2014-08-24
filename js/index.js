@@ -1,5 +1,5 @@
 "use strict";
-var stage = new PIXI.Stage(0xc0c0c0, true);
+var stage = new PIXI.Stage(0xc0c0c0);
 stage.setInteractive(true);
 
 var estimateBoardGrid = new EstimateBoardGrid({
@@ -9,38 +9,18 @@ var estimateBoardGrid = new EstimateBoardGrid({
 	colPadding: 5
 });
 
-var renderer = new PIXI.autoDetectRenderer(estimateBoardGrid.rect.width, estimateBoardGrid.rect.height);
+var renderer = new PIXI.autoDetectRenderer(
+	estimateBoardGrid.rect.width,
+	estimateBoardGrid.rect.height
+);
 renderer.view.style.display = "block";
 document.body.appendChild(renderer.view);
 
 var estimateBoard = new PIXI.Graphics();
 stage.addChild(estimateBoard);
 
-var testEstimates = [
-	{name: 'Crab', estimate: '8'},
-	{name: 'Monkey', estimate: '10'},
-	{name: 'Mr. Fun Fun', estimate: '12'},
-	{name: 'Chicklet', estimate: '8'},
-	{name: 'Rama Lama', estimate: '10'},
-	{name: 'Ding Dong', estimate: '12'},
-	{name: 'Crab', estimate: '8'},
-	{name: 'Monkey', estimate: '10'},
-	{name: 'Mr. Fun Fun', estimate: '12'},
-	{name: 'Chicklet', estimate: '8'},
-	{name: 'Rama Lama', estimate: '10'},
-	{name: 'Ding Dong', estimate: '12'},
-	{name: 'Crab', estimate: '8'},
-	{name: 'Monkey', estimate: '10'},
-	{name: 'Mr. Fun Fun', estimate: '12'},
-	{name: 'Chicklet', estimate: '8'}
-];
-var testInterval = setInterval(function () {
-	if (testEstimates.length === 0)
-		return clearInterval(testInterval);
-	addEstimate(testEstimates.pop());
-}, 750);
-
 var estimatesToAnimateIn = [];
+addTestEstimates();
 
 function addEstimate(estimate) {
 	var cell = estimateBoardGrid.getNextCell();
@@ -48,24 +28,36 @@ function addEstimate(estimate) {
 
 	cell.data = estimate;
 	cell.added = false;
+
 	// place estimate in its column off screen
-	cell.startPoint = new PIXI.Point(cell.rect.x, -cell.rect.height);
+	cell.yEasingCurrent = -cell.rect.height;
+	cell.yEasing = function(currentTime) {
+		return easeInCubic(currentTime, 0, cell.rect.y + cell.rect.y, 60);
+	};
+	cell.currentTime = 0;
 
 	estimatesToAnimateIn.push(cell);
+	animate({mode: 'triggered'});
 }
 
 function drawEstimates() {
-//	if(estimatesToAnimateIn.length === 0) {
-//		haltAnimation = true;
-//		return;
-//	}
-
 	estimateBoard.clear();
 
-	estimatesToAnimateIn.forEach(function (e, idx) {
+	var e = {};
+	for (var i = 0, c = estimatesToAnimateIn.length; i < c; i++) {
+		e = estimatesToAnimateIn[i];
+
+		if(e.yEasingCurrent < e.rect.y)
+			e.yEasingCurrent = e.yEasing(++e.currentTime);
+
 		estimateBoard.beginFill(0xff0000);
 		estimateBoard.lineStyle(1, 0x000000, 1);
-		estimateBoard.drawRect(e.rect.x, e.startPoint.y, e.rect.width, e.rect.height);
+		estimateBoard.drawRect(e.rect.x, e.yEasingCurrent, e.rect.width, e.rect.height);
+		estimateBoard.endFill();
+
+		estimateBoard.beginFill(0xff0000);
+		estimateBoard.lineStyle(1, 0x000000, 1);
+		estimateBoard.drawRect(e.rect.x, e.yEasingCurrent, e.rect.width, e.rect.height);
 		estimateBoard.endFill();
 
 //		e.text.position.x = e.rect.x + 15;
@@ -73,29 +65,38 @@ function drawEstimates() {
 //		if (!e.added)
 //			stage.addChild(e.text);
 
-		estimatesToAnimateIn[idx].added = true;
-	});
-}
+		e.added = true;
 
-// todo - halt animation when every estimate is placed
-
-var haltAnimation = false;
-
-function animate() {
-	if(haltAnimation) return;
-	requestAnimFrame(animate);
-
-	for (var i = 0, c = estimatesToAnimateIn.length; i < c; i++) {
-		if (estimatesToAnimateIn[i].startPoint.y < estimatesToAnimateIn[i].rect.y) {
-			estimatesToAnimateIn[i].startPoint.y += 5;
-		}
+//		if(e.yEasingCurrent >= e.rect.y) {
+//			console.log('done: ', i);
+//			amtAdded++;
+//		}
 	}
-
-	drawEstimates();
 	renderer.render(stage);
 }
 
-animate();
+var amtAdded = 0;
+var running = false;
+
+function animate(params) {
+	var mode = params.mode;
+	if(mode === 'triggered' && running) {
+		console.log('triggered but already running.');
+		return;
+	}
+
+	running = true;
+
+//	if(amtAdded >= estimatesToAnimateIn.length) {
+//		console.log('added all');
+//		running = false;
+//		return;
+//	}
+
+	drawEstimates();
+	requestAnimFrame(function() { animate({mode: 'auto'}); });
+}
+
 renderer.render(stage);
 
 function EstimateBoardGrid(params) {
@@ -192,4 +193,46 @@ function EstimateBoardGrid(params) {
 		debugDrawEstimateBoard: debugDrawEstimateBoard,
 		getNextCell: getNextCell
 	};
+}
+
+// cubic easing in - accelerating from zero velocity
+function easeInCubic(currentTime, startValue, changeInValue, duration) {
+	currentTime /= duration;
+	return changeInValue * currentTime * currentTime * currentTime + startValue;
+}
+
+var testInterval, testInterval2;
+function addTestEstimates() {
+	var testEstimates = [
+		{name: 'Crab', estimate: '8'},
+		{name: 'Monkey', estimate: '10'},
+		{name: 'Mr. Fun Fun', estimate: '12'},
+		{name: 'Chicklet', estimate: '8'},
+		{name: 'Rama Lama', estimate: '10'},
+		{name: 'Ding Dong', estimate: '12'},
+		{name: 'Crab', estimate: '8'},
+		{name: 'Monkey', estimate: '10'},
+		{name: 'Mr. Fun Fun', estimate: '12'},
+		{name: 'Chicklet', estimate: '8'}
+	];
+	testInterval = setInterval(function () {
+		if (testEstimates.length === 0)
+			return clearInterval(testInterval);
+		addEstimate(testEstimates.pop());
+	}, 750);
+
+	var testEstimates2 = [
+		{name: 'Rama Lama', estimate: '10'},
+		{name: 'Ding Dong', estimate: '12'},
+		{name: 'Crab', estimate: '8'},
+		{name: 'Monkey', estimate: '10'},
+		{name: 'Mr. Fun Fun', estimate: '12'},
+		{name: 'Chicklet', estimate: '8'}
+	];
+	testInterval2 = setInterval(function () {
+		if(testEstimates.length > 0) return; // do the second second, um, second!
+		if (testEstimates2.length === 0)
+			return clearInterval(testInterval);
+		addEstimate(testEstimates2.pop());
+	}, 1200);
 }
