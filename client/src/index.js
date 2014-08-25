@@ -10,7 +10,7 @@ renderer.view.style.top = "0px";
 renderer.view.style.left = "0px";
 document.body.appendChild(renderer.view);
 
-var assetsToLoad = ['images/red.png'];
+var assetsToLoad = ['images/card.png', 'images/background.jpg'];
 var loader = new PIXI.AssetLoader(assetsToLoad);
 loader.onComplete = function() {
 	var texture, sprite;

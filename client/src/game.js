@@ -5,7 +5,10 @@ var EstimateBoard = require('./estimateBoard');
 var easing = require('./easing');
 
 module.exports = function(stage, renderer) {
-	var cardSprite  = new PIXI.Sprite(PIXI.Texture.fromImage('images/red.png'));
+	var tilingSprite = new PIXI.TilingSprite(PIXI.Texture.fromImage('images/background.jpg'), window.innerWidth, window.innerHeight);
+	stage.addChild(tilingSprite);
+
+	var cardSprite  = new PIXI.Sprite(PIXI.Texture.fromImage('images/card.png'));
 
 	var estimateBoard = new EstimateBoard({
 		rows: 5,
@@ -35,7 +38,7 @@ module.exports = function(stage, renderer) {
 		};
 		cell.frameNumber = 0;
 		cell.easingComplete = false;
-		cell.sprite = new PIXI.Sprite.fromImage('images/red.png'); // hits a cache
+		cell.sprite = new PIXI.Sprite(PIXI.Texture.fromImage('images/card.png'));
 		cell.added = false;
 
 		estimatesToAnimateIn.push(cell);
