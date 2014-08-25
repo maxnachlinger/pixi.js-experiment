@@ -1,11 +1,11 @@
 var path = require('path');
-var HtmlWebpackPlugin = require('html-webpack-plugin')
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
 	context: __dirname,
 	devtool: 'source-map',
 	entry: {
-		app: './js/index.js'
+		app: './src/index.js'
 	},
 	watch: true,
 	output: {
@@ -23,7 +23,7 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ['', '.js', '.json'],
-		modulesDirectories: ['lib']
+		modulesDirectories: ['lib', 'node_modules']
 	},
 	plugins: [new HtmlWebpackPlugin()]
 };

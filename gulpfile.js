@@ -11,7 +11,7 @@ var webpackConfig = require('./webpack.config');
 
 gulp.task("webpack", function (cb) {
 	webpack(webpackConfig, function (err, stats) {
-		if (err) return cb(handleErrors(new gutil.PluginError("webpack", err)));
+		if (err) return handleErrors(new gutil.PluginError("webpack", err));
 		cb();
 	});
 });
