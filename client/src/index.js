@@ -1,5 +1,5 @@
 "use strict";
-var css = require('../css/style.css');
+var css = require('./css/style.css');
 var PIXI = require('pixi');
 var EstimateBoard = require('./estimateBoard');
 var easing = require('./easing');
@@ -27,8 +27,6 @@ addTestEstimates();
 
 function addEstimate(estimate) {
 	var cell = estimateBoard.getNextEmptyCell();
-	if (!cell) throw new Error('No cell left for this estimate, the board is too small.');
-
 	cell.data = estimate;
 
 	// place estimate in its column off screen
@@ -65,6 +63,28 @@ function getRandomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+var amtAdded = 0;
+var running = false;
+
+function animate(params) {
+	var mode = params.mode;
+	if (mode === 'triggered' && running) {
+		console.log('triggered but already running.');
+		return;
+	}
+
+	running = true;
+
+	if (amtAdded >= estimatesToAnimateIn.length) {
+		console.log('added all, stopping');
+		running = false;
+		return;
+	}
+
+	drawEstimates();
+	requestAnimFrame(function () { animate({mode: 'auto'}); });
+}
+
 function drawEstimates() {
 	estimateBoardGfx.clear();
 
@@ -91,35 +111,11 @@ function drawEstimates() {
 	renderer.render(stage);
 }
 
-var amtAdded = 0;
-var running = false;
-
-function animate(params) {
-	var mode = params.mode;
-	if (mode === 'triggered' && running) {
-		console.log('triggered but already running.');
-		return;
-	}
-
-	running = true;
-
-	if (amtAdded >= estimatesToAnimateIn.length) {
-		console.log('added all, stopping');
-		running = false;
-		return;
-	}
-
-	drawEstimates();
-	requestAnimFrame(function () { animate({mode: 'auto'}); });
-}
-
-renderer.render(stage);
-
 function addTestEstimates() {
 	var testInterval;
 	var testEstimates = [];
 
-	for (var i = 0, c = getRandomInt(2,30); i < c; i++) {
+	for (var i = 0, c = getRandomInt(8,30); i < c; i++) {
 		testEstimates.push({name: 'Test', estimate: i});
 	}
 

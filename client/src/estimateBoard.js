@@ -81,7 +81,7 @@ function EstimateBoard(params) {
 		for (var i = 0, c = cells.length; i < c; i++) {
 			if (!cells[i].data) return cells[i];
 		}
-		return null;
+		throw new Error('No cells found.');
 	}
 
 	function clear() {

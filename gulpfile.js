@@ -7,7 +7,7 @@ var gzip = require('gulp-gzip');
 var notify = require('gulp-notify');
 var gutil = require('gulp-util');
 var webpack = require('webpack');
-var webpackConfig = require('./webpack.config');
+var webpackConfig = require('./client/webpack.config.js');
 
 gulp.task("webpack", function (cb) {
 	webpack(webpackConfig, function (err, stats) {
@@ -34,7 +34,16 @@ gulp.task('clean', function (cb) {
 });
 
 gulp.task('default', function (cb) {
-	runSequence('clean', 'webpack', cb);
+	runSequence('clean', 'copy', 'webpack', cb);
+});
+
+var filesToMove = [
+	'./src/images/**/*.*',
+];
+
+gulp.task('copy', function(){
+	gulp.src(filesToMove, { base: './src' })
+		.pipe(gulp.dest('dist'));
 });
 
 gulp.task('deploy', function (cb) {
@@ -50,5 +59,5 @@ gulp.task('deploy', function (cb) {
 	webpackConfig.devtool = null;
 	webpackConfig.output.filename = "index-[hash].js";
 
-	runSequence('clean', 'webpack', 'gzip-deploy', cb);
+	runSequence('clean', 'copy', 'webpack', 'gzip-deploy', cb);
 });

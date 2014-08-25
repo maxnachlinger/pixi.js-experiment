@@ -14,9 +14,9 @@ module.exports = {
 	},
 	module: {
 		loaders: [
-			{ test: /\.css$/, loader: "style-loader!css-loader" }//,
+			{ test: /\.css$/, loader: "style-loader!css-loader" },
+			{ test: /\.png$/, loader: "url-loader?prefix=img/&limit=8192" }//,
 //			{ test: /\.less$/, loader: "style-loader!css-loader!less-loader" },
-//			{ test: /\.png$/, loader: "url-loader?prefix=img/&limit=8192" },
 //			{ test: /\.jpg$/, loader: "url-loader?prefix=img/&limit=8192" },
 //			{ test: /\.gif$/, loader: "url-loader?prefix=img/&limit=8192" }
 		]
