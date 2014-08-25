@@ -107,7 +107,7 @@ function addTestEstimates() {
 	var testEstimates2 = [];
 
 	for(var i = 0; i < 24; i++) {
-		if(i < 20) {
+		if(i < 16) {
 			testEstimates.push({name: 'Test'+i, estimate: i});
 			continue;
 		}
@@ -125,5 +125,5 @@ function addTestEstimates() {
 		if (testEstimates2.length === 0)
 			return clearInterval(testInterval2);
 		addEstimate(testEstimates2.pop());
-	}, 1000);
+	}, 750);
 }
