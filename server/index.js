@@ -12,7 +12,7 @@ server.route({
 	path: '/{path*}',
 	handler: {
 		directory: {
-			path: path.join(__dirname, '/../dist'),
+			path: path.join(__dirname, '/../client/dist'),
 			lookupCompressed: true,
 			listing: false,
 			index: true
