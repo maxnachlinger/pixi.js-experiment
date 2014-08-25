@@ -119,7 +119,7 @@ function addTestEstimates() {
 	var testInterval;
 	var testEstimates = [];
 
-	for (var i = 0, c = getRandomInt(2,25); i < c; i++) {
+	for (var i = 0, c = getRandomInt(2,30); i < c; i++) {
 		testEstimates.push({name: 'Test', estimate: i});
 	}
 
@@ -129,7 +129,7 @@ function addTestEstimates() {
 			return;
 		}
 		addEstimate(testEstimates.pop());
-	}, 500);
+	}, 300);
 }
 
 function reset() {
