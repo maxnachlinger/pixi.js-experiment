@@ -84,9 +84,16 @@ function EstimateBoard(params) {
 		return null;
 	}
 
+	function clear() {
+		for (var i = 0, c = cells.length; i < c; i++) {
+			cells[i].data = null;
+		}
+	}
+
 	return {
 		rect: boardRect,
 		cells: cells,
+		clear: clear,
 		debugDrawEstimateBoard: debugDrawEstimateBoard,
 		getNextEmptyCell: getNextEmptyCell
 	};

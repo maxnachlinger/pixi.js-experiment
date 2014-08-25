@@ -4,7 +4,7 @@ var PIXI = require('pixi');
 var EstimateBoard = require('./estimateBoard');
 var easing = require('./easing');
 
-var stage = new PIXI.Stage(0xc0c0c0);
+var stage = new PIXI.Stage(0xffffff);
 stage.setInteractive(true);
 
 var estimateBoard = new EstimateBoard({
@@ -27,21 +27,42 @@ addTestEstimates();
 
 function addEstimate(estimate) {
 	var cell = estimateBoard.getNextEmptyCell();
-	if(!cell) throw new Error('No cell left for this estimate, the board is too small.');
+	if (!cell) throw new Error('No cell left for this estimate, the board is too small.');
 
 	cell.data = estimate;
-	cell.added = false;
 
 	// place estimate in its column off screen
-	cell.yEasingCurrent = -cell.rect.height;
-	cell.yEasing = function(tick) {
-		return easing.easeInCubic(tick, 0, cell.rect.y + cell.rect.y, 30);
+	var startPoint = getRandomOffscreenPoint();
+	cell.easingCurrent = startPoint;
+
+	cell.easing = function (tick) {
+		var x = easing.easeInCubic(tick, startPoint.x, cell.rect.x - startPoint.x, 60);
+		var y = easing.easeInCubic(tick, startPoint.y, cell.rect.y - startPoint.y, 60);
+		return new PIXI.Point(x, y);
 	};
 	cell.currentTime = 0;
 	cell.easingComplete = false;
 
 	estimatesToAnimateIn.push(cell);
 	animate({mode: 'triggered'});
+}
+
+function getRandomOffscreenPoint() {
+	var x =  [
+		getRandomInt(-110, (2 * -110)), // left off-screen
+		getRandomInt(renderer.width, renderer.width + (2 * 110)) // right off-screen
+	][getRandomInt(0, 1)];
+
+	var y = [
+		getRandomInt(-110, (2 * -110)), // top off-screen
+		getRandomInt(renderer.height, renderer.height + (2 * 110)) // bottom off-screen
+	][getRandomInt(0, 1)];
+
+	return new PIXI.Point(x, y);
+}
+
+function getRandomInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function drawEstimates() {
@@ -51,23 +72,16 @@ function drawEstimates() {
 	for (var i = 0, c = estimatesToAnimateIn.length; i < c; i++) {
 		e = estimatesToAnimateIn[i];
 
-		if(e.yEasingCurrent < e.rect.y)
-			e.yEasingCurrent = e.yEasing(++e.currentTime);
+		if (e.easingCurrent.x != e.rect.x || e.easingCurrent.y != e.rect.y)
+			e.easingCurrent = e.easing(++e.currentTime);
 
 		estimateBoardGfx.beginFill(0xff0000);
 		estimateBoardGfx.lineStyle(1, 0x000000, 1);
-		estimateBoardGfx.drawRect(e.rect.x, e.yEasingCurrent, e.rect.width, e.rect.height);
+		estimateBoardGfx.drawRect(e.easingCurrent.x, e.easingCurrent.y, e.rect.width, e.rect.height);
 		estimateBoardGfx.endFill();
 
-//		e.text.position.x = e.rect.x + 15;
-//		e.text.position.y = e.rect.y + 15;
-//		if (!e.added)
-//			stage.addChild(e.text);
-
-		e.added = true;
-
-		if(e.yEasingCurrent >= e.rect.y) {
-			if(!e.easingComplete) {
+		if (e.easingCurrent.x == e.rect.x && e.easingCurrent.y == e.rect.y) {
+			if (!e.easingComplete) {
 				e.easingComplete = true;
 				amtAdded++;
 			}
@@ -82,48 +96,46 @@ var running = false;
 
 function animate(params) {
 	var mode = params.mode;
-	if(mode === 'triggered' && running) {
+	if (mode === 'triggered' && running) {
 		console.log('triggered but already running.');
 		return;
 	}
 
 	running = true;
 
-	if(amtAdded >= estimatesToAnimateIn.length) {
+	if (amtAdded >= estimatesToAnimateIn.length) {
 		console.log('added all, stopping');
 		running = false;
 		return;
 	}
 
 	drawEstimates();
-	requestAnimFrame(function() { animate({mode: 'auto'}); });
+	requestAnimFrame(function () { animate({mode: 'auto'}); });
 }
 
 renderer.render(stage);
 
 function addTestEstimates() {
-	var testInterval, testInterval2;
+	var testInterval;
 	var testEstimates = [];
-	var testEstimates2 = [];
 
-	for(var i = 0; i < 24; i++) {
-		if(i < 16) {
-			testEstimates.push({name: 'Test'+i, estimate: i});
-			continue;
-		}
-		testEstimates2.push({name: 'Test'+i, estimate: i});
+	for (var i = 0, c = getRandomInt(2,25); i < c; i++) {
+		testEstimates.push({name: 'Test', estimate: i});
 	}
 
 	testInterval = setInterval(function () {
-		if (testEstimates.length === 0)
-			return clearInterval(testInterval);
+		if (testEstimates.length === 0) {
+			clearInterval(testInterval);
+			return;
+		}
 		addEstimate(testEstimates.pop());
-	}, 200);
+	}, 500);
+}
 
-	testInterval2 = setInterval(function () {
-		if(testEstimates.length > 0) return; // do the second second, um, second!
-		if (testEstimates2.length === 0)
-			return clearInterval(testInterval2);
-		addEstimate(testEstimates2.pop());
-	}, 750);
+function reset() {
+	estimatesToAnimateIn = [];
+	amtAdded = 0;
+	estimateBoardGfx.clear();
+	estimateBoard.clear();
+	renderer.render(stage);
 }
