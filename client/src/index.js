@@ -22,7 +22,6 @@ loader.load();
 
 function setupGame() {
 	//loadingScreen.complete();
-
 	var cardTexture = PIXI.Texture.fromImage('images/card.png');
 	var cardSprite = new PIXI.Sprite(cardTexture);
 

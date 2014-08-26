@@ -1,3 +1,4 @@
+"use strict";
 var util = require('util');
 var path = require('path');
 var gulp = require('gulp');
@@ -51,7 +52,7 @@ gulp.task('clean', function (cb) {
 });
 
 gulp.task('default', function (cb) {
-	runSequence('clean', 'copy', 'webpack', cb);
+	runSequence('clean', 'copy', ['webpack', 'watch-index'], cb);
 });
 
 gulp.task('copy', function(){
@@ -60,6 +61,13 @@ gulp.task('copy', function(){
 	];
 	gulp.src(filesToCopy, { base: './client/src' })
 		.pipe(gulp.dest('./client/dist'));
+});
+
+gulp.task('watch-index', function() {
+	gulp.watch('./client/src/index.html', function() {
+		gulp.src('./client/src/index.html')
+			.pipe(gulp.dest('./client/dist/'));
+	});
 });
 
 gulp.task('deploy', function (cb) {
