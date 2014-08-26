@@ -1,5 +1,4 @@
 var path = require('path');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
 	context: __dirname,
@@ -25,5 +24,5 @@ module.exports = {
 		extensions: ['', '.js', '.json'],
 		modulesDirectories: ['lib', 'node_modules']
 	},
-	plugins: [new HtmlWebpackPlugin()]
+	plugins: []
 };

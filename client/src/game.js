@@ -1,23 +1,15 @@
 "use strict";
 var css = require('./css/style.css');
 var PIXI = require('pixi');
-var EstimateBoard = require('./estimateBoard');
-var easing = require('./easing');
+var easing = require('./util/easing');
 
-module.exports = function(stage, renderer) {
+module.exports = function(stage, renderer, estimateBoard) {
 	var tilingSprite = new PIXI.TilingSprite(PIXI.Texture.fromImage('images/background.jpg'), window.innerWidth, window.innerHeight);
 	stage.addChild(tilingSprite);
 
-	var cardSprite  = new PIXI.Sprite(PIXI.Texture.fromImage('images/card.png'));
+	estimateBoard.debugDrawEstimateBoard(stage, renderer);
 
-	var estimateBoard = new EstimateBoard({
-		rows: 5,
-		cols: 6,
-		colSize: new PIXI.Rectangle(0, 0, cardSprite.width + 10, cardSprite.height + 10),
-		colPadding: 5
-	});
-
-	var estimateBoardGfx = new PIXI.Graphics();
+	var estimateBoardGfx = new PIXI.Graphics(stage, renderer);
 	stage.addChild(estimateBoardGfx);
 
 	var estimatesToAnimateIn = [];
@@ -98,12 +90,7 @@ module.exports = function(stage, renderer) {
 				e.easingCurrent = e.easing(++e.frameNumber);
 
 			e.sprite.position = e.easingCurrent;
-			/*
-			 estimateBoardGfx.beginFill(0xff0000);
-			 estimateBoardGfx.lineStyle(1, 0x000000, 1);
-			 estimateBoardGfx.drawRect(e.easingCurrent.x, e.easingCurrent.y, e.rect.width, e.rect.height);
-			 estimateBoardGfx.endFill();
-			 */
+
 			if (e.easingCurrent.x == e.rect.x && e.easingCurrent.y == e.rect.y) {
 				if (!e.easingComplete) {
 					e.easingComplete = true;

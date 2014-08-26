@@ -8,10 +8,28 @@ var notify = require('gulp-notify');
 var gutil = require('gulp-util');
 var webpack = require('webpack');
 var webpackConfig = require('./client/webpack.config.js');
+var through2 = require('through2');
 
 gulp.task("webpack", function (cb) {
 	webpack(webpackConfig, function (err, stats) {
-		if (err) return handleErrors(new gutil.PluginError("webpack", err));
+		if (err) throw new gutil.PluginError("webpack", err);
+
+		var jsFilename = stats.toJson().assetsByChunkName['app'];
+		if (util.isArray(jsFilename)) {
+			jsFilename = jsFilename.filter(function (filename) {
+				return path.extname(filename).toLowerCase() === '.js'
+			}).shift();
+		}
+
+		// write the hashed main.js to /dist/index.html
+		gulp.src('./client/src/index.html')
+			.on('error', handleErrors)
+			.pipe(through2.obj(function (vinylFile, enc, tCb) {
+				vinylFile.contents = new Buffer(String(vinylFile.contents).replace('index.js', jsFilename));
+				this.push(vinylFile);
+				tCb();
+			}))
+			.pipe(gulp.dest('./client/dist/'));
 		cb();
 	});
 });
@@ -37,12 +55,11 @@ gulp.task('default', function (cb) {
 	runSequence('clean', 'copy', 'webpack', cb);
 });
 
-var filesToMove = [
-	'./src/images/**/*.*',
-];
-
 gulp.task('copy', function(){
-	gulp.src(filesToMove, { base: './src' })
+	var filesToCopy = [
+		'./src/images/**/*.*',
+	];
+	gulp.src(filesToCopy, { base: './src' })
 		.pipe(gulp.dest('dist'));
 });
 
