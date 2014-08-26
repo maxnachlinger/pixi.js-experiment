@@ -30,7 +30,6 @@ gulp.task("webpack", function (cb) {
 				tCb();
 			}))
 			.pipe(gulp.dest('./client/dist/'));
-		cb();
 	});
 });
 
@@ -41,14 +40,14 @@ function handleErrors() {
 }
 
 gulp.task('gzip-deploy', function () {
-	return gulp.src('./dist/**/*')
+	return gulp.src('./client/dist/**/*')
 		.on('error', handleErrors)
 		.pipe(gzip())
-		.pipe(gulp.dest('./dist/'));
+		.pipe(gulp.dest('./client/dist/'));
 });
 
 gulp.task('clean', function (cb) {
-	return rimraf('./dist', cb);
+	return rimraf('./client/dist', cb);
 });
 
 gulp.task('default', function (cb) {
@@ -57,10 +56,10 @@ gulp.task('default', function (cb) {
 
 gulp.task('copy', function(){
 	var filesToCopy = [
-		'./src/images/**/*.*',
+		'./client/src/images/**/*.*',
 	];
-	gulp.src(filesToCopy, { base: './src' })
-		.pipe(gulp.dest('dist'));
+	gulp.src(filesToCopy, { base: './client/src' })
+		.pipe(gulp.dest('./client/dist'));
 });
 
 gulp.task('deploy', function (cb) {

@@ -6,8 +6,7 @@ var easing = require('./util/easing');
 module.exports = function(stage, renderer, estimateBoard) {
 	var tilingSprite = new PIXI.TilingSprite(PIXI.Texture.fromImage('images/background.jpg'), window.innerWidth, window.innerHeight);
 	stage.addChild(tilingSprite);
-
-	estimateBoard.debugDrawEstimateBoard(stage, renderer);
+	//estimateBoard.debugDrawEstimateBoard(stage, renderer);
 
 	var estimateBoardGfx = new PIXI.Graphics(stage, renderer);
 	stage.addChild(estimateBoardGfx);
