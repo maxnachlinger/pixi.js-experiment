@@ -12,12 +12,16 @@ var amtEstimatesAnimated = 0;
 var running = false;
 
 module.exports.setup = function(params, cb) {
-	stage = new PIXI.Stage(0xffffff);
-	stage.setInteractive(true);
-
 	var gameCanvasId = params.gameCanvasId;
 	var cardImageUrl = params.cardImageUrl;
 	var backgroundTileUrl = params.backgroundTileUrl;
+	var boardMargin = params.hasOwnProperty('boardMargin') ? params.boardMargin : 10;
+	var rows = params.rows || 5;
+	var cols = params.cols || 6;
+	var cellPadding = params.hasOwnProperty('cellPadding') ? params.cellPadding : 5;
+
+	stage = new PIXI.Stage(0xffffff);
+	stage.setInteractive(true);
 
 	var gameCanvas = document.getElementById(gameCanvasId);
 	renderer = new PIXI.autoDetectRenderer(gameCanvas.width, gameCanvas.height, gameCanvas);
@@ -34,11 +38,11 @@ module.exports.setup = function(params, cb) {
 		var cardSprite = new PIXI.Sprite(cardTexture);
 
 		estimateBoard = new EstimateBoard({
-			boardMargin: 10,
-			rows: 5,
-			cols: 6,
-			colSize: new PIXI.Rectangle(0, 0, cardSprite.width + 10, cardSprite.height + 10),
-			colPadding: 5
+			boardMargin: boardMargin,
+			rows: rows,
+			cols: cols,
+			colSize: new PIXI.Rectangle(0, 0, cardSprite.width + (2 * cellPadding), cardSprite.height + (2 * cellPadding)),
+			colPadding: cellPadding
 		});
 		cb();
 	};
