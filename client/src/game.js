@@ -7,7 +7,7 @@ var EstimateBoard = require('./views/estimateBoard');
 //var LoadingScreen = require('./views/loadingScreen');
 
 var stage, renderer, estimateBoard, cardTexture, cardSpriteSize;
-var estimatesToAnimateIn = [];
+var estimates = [];
 var amtEstimatesAnimated = 0;
 var running = false;
 
@@ -21,9 +21,7 @@ module.exports.setup = function(params, cb) {
 	var cols = params.cols || 6;
 	var cellPadding = params.hasOwnProperty('cellPadding') ? params.cellPadding : 5;
 
-	stage = new PIXI.Stage(0xffffff);
-	stage.setInteractive(true);
-
+	stage = new PIXI.Stage(0xffffff, true);
 	var gameCanvas = document.getElementById(gameCanvasId);
 	renderer = new PIXI.autoDetectRenderer(gameCanvas.width, gameCanvas.height, gameCanvas);
 
@@ -46,6 +44,7 @@ module.exports.setup = function(params, cb) {
 			colSize: new PIXI.Rectangle(0, 0, cardSpriteSize.width + (2 * cellPadding), cardSpriteSize.height + (2 * cellPadding)),
 			colPadding: cellPadding
 		});
+		estimateBoard.debugDrawEstimateBoard(stage, renderer);
 		cb();
 	};
 	//loader.on('onProgress', function (e) {
@@ -54,25 +53,54 @@ module.exports.setup = function(params, cb) {
 	loader.load();
 };
 
-module.exports.addEstimate = function(estimate) {
+module.exports.addEstimate = function(estimateData) {
 	var estimateBlock = estimateBoard.getNextEmptyCell();
-	estimateBlock.data = estimate;
+	estimateBlock.data = estimateData;
 
-	var startPoint = getRandomOffscreenPoint();
-	estimateBlock.currentLocation = startPoint;
+	// get random off-screen point
+	var startX = [
+		random.getRandomIntInRange(-cardSpriteSize.width, (2 * -cardSpriteSize.width)), // left off-screen
+		random.getRandomIntInRange(renderer.width, renderer.width + (2 * cardSpriteSize.width)) // right off-screen
+	][random.getRandomIntInRange(0, 1)];
+	var startY = [
+		random.getRandomIntInRange(-cardSpriteSize.height, (2 * -cardSpriteSize.height)), // top off-screen
+		random.getRandomIntInRange(renderer.height, renderer.height + (2 * cardSpriteSize.height)) // bottom off-screen
+	][random.getRandomIntInRange(0, 1)];
 
-	estimateBlock.easing = function (tick) {
-		var x = easing.easeInCubic(tick, startPoint.x, estimateBlock.rect.x - startPoint.x, 60);
-		var y = easing.easeInCubic(tick, startPoint.y, estimateBlock.rect.y - startPoint.y, 60);
-		return new PIXI.Point(x, y);
+	estimateBlock.currentLocation = new PIXI.Point(startX, startY);
+	estimateBlock.center = new PIXI.Point(startX + (cardSpriteSize.width / 2), startY + (cardSpriteSize.height / 2))
+
+	estimateBlock.animateInEasingFn = function (tick) {
+		return new PIXI.Point(
+			easing.easeInCubic(tick, estimateBlock.currentLocation.x, estimateBlock.rect.x - estimateBlock.currentLocation.x, 60),
+			easing.easeInCubic(tick, estimateBlock.currentLocation.y, estimateBlock.rect.y - estimateBlock.currentLocation.y, 60)
+		);
 	};
-	estimateBlock.frameNumber = 0;
-	estimateBlock.moveComplete = false;
-	estimateBlock.sprite = new PIXI.Sprite(cardTexture);
-	estimateBlock.added = false;
 
-	estimatesToAnimateIn.push(estimateBlock);
+	estimateBlock.flipFn = function(e) {
+		var scaleX = e.sprite.scale.x * -1;
+		var positionX = e.center.x - scaleX * e.rect.width / 2;
+		return {
+			scaleX: scaleX,
+			position: new PIXI.Point(positionX, e.sprite.position.y)
+		};
+	};
+
+	estimateBlock.frameNumber = 0;
+	estimateBlock.animationNeeded = 'animateIn';
+	estimateBlock.sprite = new PIXI.Sprite(cardTexture);
+	estimateBlock.addedToStage = false;
+
+	estimates.push(estimateBlock);
 	animate({mode: 'triggered'});
+};
+
+module.exports.showEstimates = function() {
+	amtEstimatesAnimated = 0;
+	for (var i = 0, c = estimates.length; i < c; i++) {
+		estimates[i].animationNeeded = 'flip';
+	}
+	requestAnimFrame(function () { animate({mode: 'triggered'}); });
 };
 
 function animate(params) {
@@ -84,49 +112,41 @@ function animate(params) {
 
 	running = true;
 
-	if (amtEstimatesAnimated >= estimatesToAnimateIn.length) {
+	if (amtEstimatesAnimated >= estimates.length) {
 		console.log('added all, stopping');
 		running = false;
 		return;
 	}
 
-	drawEstimates();
+	animateEstimates();
 	requestAnimFrame(function () { animate({mode: 'auto'}); });
 }
 
-function drawEstimates() {
+function animateEstimates() {
 	var e = {};
-	for (var i = 0, c = estimatesToAnimateIn.length; i < c; i++) {
-		e = estimatesToAnimateIn[i];
-		if (!e.added)
+	for (var i = 0, c = estimates.length; i < c; i++) {
+		e = estimates[i];
+		if (!e.addedToStage)
 			stage.addChild(e.sprite);
 
-		if (e.currentLocation.x != e.rect.x || e.currentLocation.y != e.rect.y)
-			e.currentLocation = e.easing(++e.frameNumber);
-
-		e.sprite.position = e.currentLocation;
+		if(e.animationNeeded == 'animateIn') {
+			e.currentLocation = e.animateInEasingFn(++e.frameNumber);
+			e.sprite.position = e.currentLocation;
+		}
+//		if(e.animationNeeded == 'flip') {
+//			var flipData = e.flipFn(e);
+//			e.currentLocation = flipData.position;
+//			e.sprite.position = e.currentLocation;
+//			e.sprite.scale.x *= flipData.scaleX;
+//		}
 
 		if (e.currentLocation.x == e.rect.x && e.currentLocation.y == e.rect.y) {
-			if (!e.moveComplete) {
-				e.moveComplete = true;
+			if (e.animationNeeded) {
+				e.animationNeeded = null;
 				amtEstimatesAnimated++;
 			}
 			console.log(amtEstimatesAnimated, 'item(s) done easing in.');
 		}
 	}
 	renderer.render(stage);
-}
-
-function getRandomOffscreenPoint() {
-	var x = [
-		random.getRandomIntInRange(-cardSpriteSize.width, (2 * -cardSpriteSize.width)), // left off-screen
-		random.getRandomIntInRange(renderer.width, renderer.width + (2 * cardSpriteSize.width)) // right off-screen
-	][random.getRandomIntInRange(0, 1)];
-
-	var y = [
-		random.getRandomIntInRange(-cardSpriteSize.height, (2 * -cardSpriteSize.height)), // top off-screen
-		random.getRandomIntInRange(renderer.height, renderer.height + (2 * cardSpriteSize.height)) // bottom off-screen
-	][random.getRandomIntInRange(0, 1)];
-
-	return new PIXI.Point(x, y);
 }

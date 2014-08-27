@@ -34,3 +34,7 @@ function debugAddEstimates() {
 		game.addEstimate(testEstimates2.pop());
 	}, 750);
 }
+
+setTimeout(function() {
+	game.showEstimates();
+}, 5000);
