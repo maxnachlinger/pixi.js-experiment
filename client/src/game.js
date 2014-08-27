@@ -3,42 +3,70 @@ var css = require('./css/style.css');
 var PIXI = require('pixi');
 var easing = require('./util/easing');
 var random = require('./util/random');
+var EstimateBoard = require('./views/estimateBoard');
+//var LoadingScreen = require('./views/loadingScreen');
 
-var stage, renderer, estimateBoard, backgroundTexture, cardTexture;
+var stage, renderer, estimateBoard, cardTexture;
 var estimatesToAnimateIn = [];
 var amtEstimatesAnimated = 0;
 var running = false;
 
-module.exports.setup = function(params) {
-	stage = params.stage;
-	renderer = params.renderer;
-	estimateBoard = params.estimateBoard;
-	backgroundTexture = params.backgroundTexture;
-	cardTexture = params.cardTexture;
+module.exports.setup = function(params, cb) {
+	stage = new PIXI.Stage(0xffffff);
+	stage.setInteractive(true);
 
-	var tilingSprite = new PIXI.TilingSprite(backgroundTexture, renderer.view.width, renderer.view.height);
-	stage.addChild(tilingSprite);
+	var gameCanvasId = params.gameCanvasId;
+	var cardImageUrl = params.cardImageUrl;
+	var backgroundTileUrl = params.backgroundTileUrl;
+
+	var gameCanvas = document.getElementById(gameCanvasId);
+	renderer = new PIXI.autoDetectRenderer(gameCanvas.width, gameCanvas.height, gameCanvas);
+
+	//var loadingScreen = new LoadingScreen(stage, renderer);
+	var loader = new PIXI.AssetLoader([cardImageUrl, backgroundTileUrl]);
+
+	loader.onComplete = function() {
+		//loadingScreen.complete();
+		var tilingSprite = new PIXI.TilingSprite(backgroundTileUrl, renderer.view.width, renderer.view.height);
+		stage.addChild(tilingSprite);
+
+		cardTexture = PIXI.Texture.fromImage(cardImageUrl);
+		var cardSprite = new PIXI.Sprite(cardTexture);
+
+		estimateBoard = new EstimateBoard({
+			boardMargin: 10,
+			rows: 5,
+			cols: 6,
+			colSize: new PIXI.Rectangle(0, 0, cardSprite.width + 10, cardSprite.height + 10),
+			colPadding: 5
+		});
+		cb();
+	};
+	//loader.on('onProgress', function (e) {
+	//	loadingScreen.progress((1 - (e.content.loadCount / e.content.assetURLs.length)) * 100);
+	//});
+	loader.load();
 };
 
 module.exports.addEstimate = function(estimate) {
-	var cell = estimateBoard.getNextEmptyCell();
-	cell.data = estimate;
+	var estimateBlock = estimateBoard.getNextEmptyCell();
+	estimateBlock.data = estimate;
 
 	// place estimate in its column off screen
 	var startPoint = getRandomOffscreenPoint();
-	cell.easingCurrent = startPoint;
+	estimateBlock.currentLocation = startPoint;
 
-	cell.easing = function (tick) {
-		var x = easing.easeInCubic(tick, startPoint.x, cell.rect.x - startPoint.x, 60);
-		var y = easing.easeInCubic(tick, startPoint.y, cell.rect.y - startPoint.y, 60);
+	estimateBlock.easing = function (tick) {
+		var x = easing.easeInCubic(tick, startPoint.x, estimateBlock.rect.x - startPoint.x, 60);
+		var y = easing.easeInCubic(tick, startPoint.y, estimateBlock.rect.y - startPoint.y, 60);
 		return new PIXI.Point(x, y);
 	};
-	cell.frameNumber = 0;
-	cell.easingComplete = false;
-	cell.sprite = new PIXI.Sprite(cardTexture);
-	cell.added = false;
+	estimateBlock.frameNumber = 0;
+	estimateBlock.moveComplete = false;
+	estimateBlock.sprite = new PIXI.Sprite(cardTexture);
+	estimateBlock.added = false;
 
-	estimatesToAnimateIn.push(cell);
+	estimatesToAnimateIn.push(estimateBlock);
 	animate({mode: 'triggered'});
 };
 
@@ -62,20 +90,20 @@ function animate(params) {
 }
 
 function drawEstimates() {
-	var e = {};
+	var estimateBlock = {};
 	for (var i = 0, c = estimatesToAnimateIn.length; i < c; i++) {
-		e = estimatesToAnimateIn[i];
-		if (!e.added)
-			stage.addChild(e.sprite);
+		estimateBlock = estimatesToAnimateIn[i];
+		if (!estimateBlock.added)
+			stage.addChild(estimateBlock.sprite);
 
-		if (e.easingCurrent.x != e.rect.x || e.easingCurrent.y != e.rect.y)
-			e.easingCurrent = e.easing(++e.frameNumber);
+		if (estimateBlock.currentLocation.x != estimateBlock.rect.x || estimateBlock.currentLocation.y != estimateBlock.rect.y)
+			estimateBlock.currentLocation = estimateBlock.easing(++estimateBlock.frameNumber);
 
-		e.sprite.position = e.easingCurrent;
+		estimateBlock.sprite.position = estimateBlock.currentLocation;
 
-		if (e.easingCurrent.x == e.rect.x && e.easingCurrent.y == e.rect.y) {
-			if (!e.easingComplete) {
-				e.easingComplete = true;
+		if (estimateBlock.currentLocation.x == estimateBlock.rect.x && estimateBlock.currentLocation.y == estimateBlock.rect.y) {
+			if (!estimateBlock.moveComplete) {
+				estimateBlock.moveComplete = true;
 				amtEstimatesAnimated++;
 			}
 			console.log(amtEstimatesAnimated, 'item(s) done easing in.');
