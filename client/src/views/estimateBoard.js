@@ -9,7 +9,7 @@ function EstimateBoard(params) {
 	var rows = params.rows || 6;
 	var cols = params.cols || 6;
 	var colSize = params.colSize || new PIXI.Rectangle(0, 0, 110, 110);
-	// colPadding could be 0, for || 5 wouldn't work
+	// could be 0, so || DEFAULT wouldn't work
 	var colPadding = params.hasOwnProperty('colPadding') ? params.colPadding : 5;
 	var boardMargin = params.boardMargin || 5;
 

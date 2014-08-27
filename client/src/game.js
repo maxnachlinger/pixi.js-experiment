@@ -6,7 +6,7 @@ var random = require('./util/random');
 var EstimateBoard = require('./views/estimateBoard');
 //var LoadingScreen = require('./views/loadingScreen');
 
-var stage, renderer, estimateBoard, cardTexture;
+var stage, renderer, estimateBoard, cardTexture, cardSpriteSize;
 var estimatesToAnimateIn = [];
 var amtEstimatesAnimated = 0;
 var running = false;
@@ -15,6 +15,7 @@ module.exports.setup = function(params, cb) {
 	var gameCanvasId = params.gameCanvasId;
 	var cardImageUrl = params.cardImageUrl;
 	var backgroundTileUrl = params.backgroundTileUrl;
+	// could be 0, so || DEFAULT wouldn't work
 	var boardMargin = params.hasOwnProperty('boardMargin') ? params.boardMargin : 10;
 	var rows = params.rows || 5;
 	var cols = params.cols || 6;
@@ -36,12 +37,13 @@ module.exports.setup = function(params, cb) {
 
 		cardTexture = PIXI.Texture.fromImage(cardImageUrl);
 		var cardSprite = new PIXI.Sprite(cardTexture);
+		cardSpriteSize = new PIXI.Rectangle(0, 0, cardSprite.width, cardSprite.height);
 
 		estimateBoard = new EstimateBoard({
 			boardMargin: boardMargin,
 			rows: rows,
 			cols: cols,
-			colSize: new PIXI.Rectangle(0, 0, cardSprite.width + (2 * cellPadding), cardSprite.height + (2 * cellPadding)),
+			colSize: new PIXI.Rectangle(0, 0, cardSpriteSize.width + (2 * cellPadding), cardSpriteSize.height + (2 * cellPadding)),
 			colPadding: cellPadding
 		});
 		cb();
@@ -56,7 +58,6 @@ module.exports.addEstimate = function(estimate) {
 	var estimateBlock = estimateBoard.getNextEmptyCell();
 	estimateBlock.data = estimate;
 
-	// place estimate in its column off screen
 	var startPoint = getRandomOffscreenPoint();
 	estimateBlock.currentLocation = startPoint;
 
@@ -94,20 +95,20 @@ function animate(params) {
 }
 
 function drawEstimates() {
-	var estimateBlock = {};
+	var e = {};
 	for (var i = 0, c = estimatesToAnimateIn.length; i < c; i++) {
-		estimateBlock = estimatesToAnimateIn[i];
-		if (!estimateBlock.added)
-			stage.addChild(estimateBlock.sprite);
+		e = estimatesToAnimateIn[i];
+		if (!e.added)
+			stage.addChild(e.sprite);
 
-		if (estimateBlock.currentLocation.x != estimateBlock.rect.x || estimateBlock.currentLocation.y != estimateBlock.rect.y)
-			estimateBlock.currentLocation = estimateBlock.easing(++estimateBlock.frameNumber);
+		if (e.currentLocation.x != e.rect.x || e.currentLocation.y != e.rect.y)
+			e.currentLocation = e.easing(++e.frameNumber);
 
-		estimateBlock.sprite.position = estimateBlock.currentLocation;
+		e.sprite.position = e.currentLocation;
 
-		if (estimateBlock.currentLocation.x == estimateBlock.rect.x && estimateBlock.currentLocation.y == estimateBlock.rect.y) {
-			if (!estimateBlock.moveComplete) {
-				estimateBlock.moveComplete = true;
+		if (e.currentLocation.x == e.rect.x && e.currentLocation.y == e.rect.y) {
+			if (!e.moveComplete) {
+				e.moveComplete = true;
 				amtEstimatesAnimated++;
 			}
 			console.log(amtEstimatesAnimated, 'item(s) done easing in.');
@@ -118,13 +119,13 @@ function drawEstimates() {
 
 function getRandomOffscreenPoint() {
 	var x = [
-		random.getRandomIntInRange(-110, (2 * -110)), // left off-screen
-		random.getRandomIntInRange(renderer.width, renderer.width + (2 * 110)) // right off-screen
+		random.getRandomIntInRange(-cardSpriteSize.width, (2 * -cardSpriteSize.width)), // left off-screen
+		random.getRandomIntInRange(renderer.width, renderer.width + (2 * cardSpriteSize.width)) // right off-screen
 	][random.getRandomIntInRange(0, 1)];
 
 	var y = [
-		random.getRandomIntInRange(-110, (2 * -110)), // top off-screen
-		random.getRandomIntInRange(renderer.height, renderer.height + (2 * 110)) // bottom off-screen
+		random.getRandomIntInRange(-cardSpriteSize.height, (2 * -cardSpriteSize.height)), // top off-screen
+		random.getRandomIntInRange(renderer.height, renderer.height + (2 * cardSpriteSize.height)) // bottom off-screen
 	][random.getRandomIntInRange(0, 1)];
 
 	return new PIXI.Point(x, y);
