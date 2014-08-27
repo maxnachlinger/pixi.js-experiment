@@ -27,7 +27,7 @@ module.exports.setup = function(params, cb) {
 
 	loader.onComplete = function() {
 		//loadingScreen.complete();
-		var tilingSprite = new PIXI.TilingSprite(backgroundTileUrl, renderer.view.width, renderer.view.height);
+		var tilingSprite = new PIXI.TilingSprite(PIXI.Texture.fromImage(backgroundTileUrl), renderer.view.width, renderer.view.height);
 		stage.addChild(tilingSprite);
 
 		cardTexture = PIXI.Texture.fromImage(cardImageUrl);
