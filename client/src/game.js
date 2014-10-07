@@ -92,7 +92,7 @@ module.exports.addEstimate = function(estimateData) {
 	estimateBlock.addedToStage = false;
 
 	estimates.push(estimateBlock);
-	animate({mode: 'triggered'});
+	animate({mode: 'triggered'})();
 };
 
 module.exports.showEstimates = function() {
@@ -100,26 +100,28 @@ module.exports.showEstimates = function() {
 	for (var i = 0, c = estimates.length; i < c; i++) {
 		estimates[i].animationNeeded = 'flip';
 	}
-	requestAnimFrame(function () { animate({mode: 'triggered'}); });
+	requestAnimFrame(animate({mode: 'triggered'}));
 };
 
 function animate(params) {
-	var mode = params.mode;
-	if (mode === 'triggered' && running) {
-		console.log('triggered but already running.');
-		return;
-	}
+	return function() {
+		var mode = params.mode;
+		if (mode === 'triggered' && running) {
+			console.log('triggered but already running.');
+			return;
+		}
 
-	running = true;
+		running = true;
 
-	if (amtEstimatesAnimated >= estimates.length) {
-		console.log('added all, stopping');
-		running = false;
-		return;
-	}
+		if (amtEstimatesAnimated >= estimates.length) {
+			console.log('added all, stopping');
+			running = false;
+			return;
+		}
 
-	animateEstimates();
-	requestAnimFrame(function () { animate({mode: 'auto'}); });
+		animateEstimates();
+		requestAnimFrame(animate({mode: 'auto'}));
+	};
 }
 
 function animateEstimates() {
@@ -133,19 +135,21 @@ function animateEstimates() {
 			e.currentLocation = e.animateInEasingFn(++e.frameNumber);
 			e.sprite.position = e.currentLocation;
 		}
-//		if(e.animationNeeded == 'flip') {
-//			var flipData = e.flipFn(e);
-//			e.currentLocation = flipData.position;
-//			e.sprite.position = e.currentLocation;
+		if(e.animationNeeded == 'flip') {
+			var flipData = e.flipFn(e);
+			console.log(e.currentLocation.x, e.sprite.width, flipData.position.x)
+//			e.currentLocation.x -= e.sprite.width;
+//			e.sprite.position.x = e.currentLocation.x;
 //			e.sprite.scale.x *= flipData.scaleX;
-//		}
+		}
 
+		// we're done animating when we're back at our correct spot
 		if (e.currentLocation.x == e.rect.x && e.currentLocation.y == e.rect.y) {
 			if (e.animationNeeded) {
 				e.animationNeeded = null;
 				amtEstimatesAnimated++;
 			}
-			console.log(amtEstimatesAnimated, 'item(s) done easing in.');
+			console.log(amtEstimatesAnimated, 'item(s) done animating.');
 		}
 	}
 	renderer.render(stage);
